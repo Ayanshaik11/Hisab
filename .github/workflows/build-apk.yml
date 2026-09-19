@@ -1,0 +1,58 @@
+name: Build APK
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check Firebase config was filled in
+        run: |
+          test -f www/fb-init.js || { echo "::error::www/fb-init.js is missing"; exit 1; }
+          if grep -q "YOUR_API_KEY" www/fb-init.js; then
+            echo "::error::www/fb-init.js still has placeholder Firebase keys. Replace it with your real one."
+            exit 1
+          fi
+
+      - name: Check profile image exists
+        run: |
+          test -f www/IMG_20251116_215737_558.webp || {
+            echo "::error::Put IMG_20251116_215737_558.webp inside the www/ folder"; exit 1; }
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Add Android platform
+        run: npx cap add android
+
+      - name: Sync web files into Android project
+        run: npx cap sync android
+
+      - name: Build debug APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Hisab-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
