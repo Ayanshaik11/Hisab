@@ -4,6 +4,7 @@
   "private": true,
   "description": "Hisab - personal ledger app",
   "dependencies": {
+    "@capacitor-firebase/authentication": "^7.0.0",
     "@capacitor/android": "^7.0.0",
     "@capacitor/cli": "^7.0.0",
     "@capacitor/core": "^7.0.0"
