@@ -92,12 +92,32 @@ loginBtn.addEventListener("click", async () => {
 //  - In a normal browser: the usual Firebase popup
 const isNativeApp = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
 
+// This app has no bundler, so only Capacitor's small native bridge is loaded
+// (no registerPlugin). Call the native plugin through the bridge directly.
+function callNativePlugin(plugin, method, options = {}) {
+
+  const cap = window.Capacitor;
+
+  if (cap.Plugins && cap.Plugins[plugin] && typeof cap.Plugins[plugin][method] === "function") {
+    return cap.Plugins[plugin][method](options);
+  }
+
+  if (typeof cap.nativePromise === "function") {
+    return cap.nativePromise(plugin, method, options);
+  }
+
+  if (typeof cap.registerPlugin === "function") {
+    return cap.registerPlugin(plugin)[method](options);
+  }
+
+  throw new Error("Native Google login isn't available in this build.");
+
+}
+
 async function googleLoginNative() {
 
-  const FirebaseAuthentication = window.Capacitor.registerPlugin("FirebaseAuthentication");
-
   // skipNativeAuth is on (capacitor.config.json), so this only returns Google's token
-  const result = await FirebaseAuthentication.signInWithGoogle();
+  const result = await callNativePlugin("FirebaseAuthentication", "signInWithGoogle");
 
   const idToken = result.credential && result.credential.idToken;
 
