@@ -3,6 +3,7 @@ import {
   signInWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithCredential,
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 
@@ -37,6 +38,7 @@ function showAuthError(error) {
     "auth/too-many-requests": "Too many attempts. Try again later.",
     "auth/network-request-failed": "Network error. Check your connection.",
     "auth/popup-blocked": "Your browser blocked the Google popup. Allow popups and try again.",
+    "auth/missing-initial-state": "Google login failed in this browser. Please try again.",
     "auth/operation-not-supported-in-this-environment": "Google login isn't available in the app yet. Please use email and password.",
     "auth/unauthorized-domain": "This domain isn't authorised in Firebase → Authentication → Settings → Authorized domains."
   };
@@ -86,19 +88,53 @@ loginBtn.addEventListener("click", async () => {
 
 
 // Google Login
+//  - In the Android app: native Google sign-in (popups don't work in a WebView)
+//  - In a normal browser: the usual Firebase popup
+const isNativeApp = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+
+async function googleLoginNative() {
+
+  const FirebaseAuthentication = window.Capacitor.registerPlugin("FirebaseAuthentication");
+
+  // skipNativeAuth is on (capacitor.config.json), so this only returns Google's token
+  const result = await FirebaseAuthentication.signInWithGoogle();
+
+  const idToken = result.credential && result.credential.idToken;
+
+  if (!idToken) {
+    throw new Error("Google did not return a login token.");
+  }
+
+  // Sign in to the same Firebase web SDK the rest of the app uses
+  const credential = GoogleAuthProvider.credential(idToken);
+  await signInWithCredential(auth, credential);
+
+}
+
 googleBtn.addEventListener("click", async () => {
 
-  const provider = new GoogleAuthProvider();
+  googleBtn.disabled = true;
 
   try {
 
-    await signInWithPopup(auth, provider);
+    if (isNativeApp) {
+      await googleLoginNative();
+    } else {
+      await signInWithPopup(auth, new GoogleAuthProvider());
+    }
 
     window.location.href = "main.html";
 
   } catch (error) {
 
+    // Person backed out of the Google account chooser
+    if (/cancel/i.test(String(error && (error.message || error.code)))) return;
+
     showAuthError(error);
+
+  } finally {
+
+    googleBtn.disabled = false;
 
   }
 
