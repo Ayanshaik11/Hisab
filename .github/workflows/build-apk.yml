@@ -25,6 +25,13 @@ jobs:
           test -f www/IMG_20251116_215737_558.webp || {
             echo "::error::Put IMG_20251116_215737_558.webp inside the www/ folder"; exit 1; }
 
+      - name: Check google-services.json exists
+        run: |
+          test -f google-services.json || {
+            echo "::error::Put google-services.json (from Firebase console -> Android app) in the repo root"; exit 1; }
+          grep -q '"com.hisab.app"' google-services.json || {
+            echo "::error::google-services.json is not for package com.hisab.app"; exit 1; }
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
@@ -42,8 +49,23 @@ jobs:
       - name: Add Android platform
         run: npx cap add android
 
+      - name: Add google-services.json
+        run: cp google-services.json android/app/google-services.json
+
+      - name: Use fixed debug keystore (keeps the SHA-1 the same every build)
+        run: |
+          mkdir -p ~/.android
+          cp keystore/debug.keystore ~/.android/debug.keystore
+
       - name: Sync web files into Android project
         run: npx cap sync android
+
+      - name: Verify Google login plugin is in the app
+        run: |
+          echo "--- installed Capacitor plugins ---"
+          cat android/app/src/main/assets/capacitor.plugins.json
+          grep -qi "firebase/authentication" android/app/src/main/assets/capacitor.plugins.json || {
+            echo "::error::@capacitor-firebase/authentication is missing. Add it to package.json dependencies."; exit 1; }
 
       - name: Build debug APK
         working-directory: android
