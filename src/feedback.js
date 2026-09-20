@@ -2,7 +2,6 @@
 // Both can be switched off from the profile button (Account popup).
 
 import { Vibration } from "react-native";
-import { createAudioPlayer } from "expo-audio";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const STORAGE_KEY = "hisab:feedback-settings";
@@ -54,6 +53,7 @@ export async function setFeedbackSetting(key, value) {
 function getPlayer(name) {
   if (!players[name]) {
     try {
+      const { createAudioPlayer } = require("expo-audio");   // lazy: sound problems can't stop the app opening
       players[name] = createAudioPlayer(SOURCES[name]);
     } catch (error) {
       console.warn("Could not create sound", name, error);
