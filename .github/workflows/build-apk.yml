@@ -31,6 +31,10 @@ jobs:
             echo "::error::Put google-services.json (from Firebase console -> Android app) in the repo root"; exit 1; }
           grep -q '"com.hisab.app"' google-services.json || {
             echo "::error::google-services.json is not for package com.hisab.app"; exit 1; }
+          grep -qi "54f85e9db61e77b6e768d4c60b5ff5a08c26158a" google-services.json || {
+            echo "::error::google-services.json doesn't contain the SHA-1 (54:F8:5E:9D:...:15:8A). Add it in Firebase -> Project settings -> your Android app, then download google-services.json again."; exit 1; }
+          grep -q '"client_type": *3' google-services.json || {
+            echo "::error::google-services.json has no web client. Enable Google in Firebase -> Authentication -> Sign-in method, then download google-services.json again."; exit 1; }
 
       - name: Set up Node
         uses: actions/setup-node@v4
