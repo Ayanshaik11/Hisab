@@ -52,6 +52,18 @@ jobs:
       - name: Align package versions with the Expo SDK
         run: npx expo install --fix
 
+      - name: Force every Expo package (even indirect ones) to the SDK version
+        run: node scripts/align-expo.js
+
+      - name: Show installed Expo package versions
+        run: |
+          {
+            echo "### Installed Expo package versions"
+            echo '```'
+            npm ls expo expo-asset expo-modules-core expo-constants expo-file-system expo-font expo-audio expo-linear-gradient react-native --all 2>&1 | head -60 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Generate the Android project
         run: npx expo prebuild --platform android --no-install
 
