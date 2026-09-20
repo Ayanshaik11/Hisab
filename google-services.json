@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "374364394252-aa017h737la34omo9clb3j2haa6vo55s.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.hisab.app",
+            "certificate_hash": "54f85e9db61e77b6e768d4c60b5ff5a08c26158a"
+          }
+        },
+        {
           "client_id": "374364394252-hns6ceo9e9tul964lme7bcpu0p5mdahm.apps.googleusercontent.com",
           "client_type": 3
         }
