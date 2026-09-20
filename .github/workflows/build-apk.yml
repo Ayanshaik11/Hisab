@@ -66,22 +66,29 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a --no-daemon
 
-      - name: Show the APK's SHA-1 (add this to Firebase for Google login)
-        run: |
-          APK=android/app/build/outputs/apk/release/app-release.apk
-          ls -la "$APK"
-          keytool -printcert -jarfile "$APK" | tee cert.txt
-          {
-            echo "### APK signing fingerprint"
-            echo "Add this SHA-1 in Firebase > Project settings > your Android app (package com.hisab.app):"
-            echo
-            echo '```'
-            grep -E "SHA1|SHA256" cert.txt
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Hisab-apk
           path: android/app/build/outputs/apk/release/app-release.apk
+
+      - name: Show the APK's SHA-1 (add this to Firebase for Google login)
+        continue-on-error: true
+        run: |
+          APK=android/app/build/outputs/apk/release/app-release.apk
+          SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          APKSIGNER=$(ls -d "$SDK"/build-tools/*/apksigner | sort -V | tail -1)
+          "$APKSIGNER" verify --print-certs "$APK" | tee cert.txt
+          {
+            echo "### APK signing fingerprint"
+            echo "Add the SHA-1 below in Firebase > Project settings > your Android app (package com.hisab.app):"
+            echo
+            echo '```'
+            grep -E "SHA-1|SHA-256" cert.txt
+            echo '```'
+            echo
+            echo "Fingerprint of keystore/debug.keystore (should be the same SHA-1):"
+            echo '```'
+            keytool -list -v -keystore keystore/debug.keystore -storepass android -alias androiddebugkey | grep -E "SHA1|SHA256"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
