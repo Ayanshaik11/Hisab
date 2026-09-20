@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "Hisab",
+    "slug": "hisab",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0b0f14",
+    "android": {
+      "package": "com.hisab.app",
+      "versionCode": 1,
+      "permissions": ["VIBRATE"],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#0b0f14"
+      }
+    }
+  }
+}
