@@ -21,8 +21,8 @@ jobs:
               exit 1
             fi
           done
-          if grep -q "YOUR_" src/config.js; then
-            echo "::error::src/config.js still has YOUR_ placeholders. Paste your Firebase details and Web client ID there."
+          if grep -qE "YOUR_(API_KEY|PROJECT|WEB_CLIENT_ID)" src/config.js; then
+            echo "::error::src/config.js still has the placeholder values. Paste your Firebase details and Web client ID there."
             exit 1
           fi
 
