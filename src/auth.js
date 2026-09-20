@@ -4,17 +4,22 @@ import {
   signInWithEmailAndPassword,
   signOut
 } from "firebase/auth";
-import {
-  GoogleSignin,
-  isSuccessResponse,
-  statusCodes
-} from "@react-native-google-signin/google-signin";
+
+// Loaded only when needed, so a problem with Google login can never stop the app opening
+function googleModule() {
+  return require("@react-native-google-signin/google-signin");
+}
 
 import { auth } from "./firebase";
 import { GOOGLE_WEB_CLIENT_ID } from "./config";
 
 export function configureGoogle() {
-  GoogleSignin.configure({ webClientId: GOOGLE_WEB_CLIENT_ID });
+  try {
+    const { GoogleSignin } = googleModule();
+    GoogleSignin.configure({ webClientId: GOOGLE_WEB_CLIENT_ID });
+  } catch (error) {
+    console.warn("Google sign-in is not available", error);
+  }
 }
 
 export async function loginWithEmail(email, password) {
@@ -23,6 +28,8 @@ export async function loginWithEmail(email, password) {
 
 // Returns false if the person backed out of the Google account chooser
 export async function loginWithGoogle() {
+  const { GoogleSignin, isSuccessResponse } = googleModule();
+
   await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
 
   const response = await GoogleSignin.signIn();
@@ -41,7 +48,7 @@ export async function loginWithGoogle() {
 
 export async function logout() {
   try {
-    await GoogleSignin.signOut();   // so the Google account chooser shows again next time
+    await googleModule().GoogleSignin.signOut();   // so the Google account chooser shows again next time
   } catch (error) {
     // not signed in with Google - fine
   }
@@ -58,9 +65,18 @@ const FIREBASE_MESSAGES = {
     "An account already exists with this email. Log in with your email and password."
 };
 
+function statusCodes() {
+  try {
+    return googleModule().statusCodes || {};
+  } catch (error) {
+    return {};
+  }
+}
+
 export function isCancelled(error) {
   const code = String((error && error.code) || "");
-  return code === statusCodes.SIGN_IN_CANCELLED || code === statusCodes.IN_PROGRESS;
+  const codes = statusCodes();
+  return code === codes.SIGN_IN_CANCELLED || code === codes.IN_PROGRESS;
 }
 
 export function errorMessage(error) {
@@ -71,7 +87,7 @@ export function errorMessage(error) {
 
   if (FIREBASE_MESSAGES[code]) return FIREBASE_MESSAGES[code];
 
-  if (code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+  if (code === statusCodes().PLAY_SERVICES_NOT_AVAILABLE) {
     return "Google Play Services is missing or out of date on this phone.";
   }
 
